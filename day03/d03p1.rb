@@ -20,7 +20,7 @@ def execute_ops(ops)
   ops.sum { |op| execute_op(op) }
 end
 
-input_file = ENV['DEMO'] ? "input-demo.txt" : "input.txt"
+input_file = ENV['DEMO'] ? "input-demo-p1.txt" : "input.txt"
 lines = File.readlines(input_file)
 
 sum = 0
