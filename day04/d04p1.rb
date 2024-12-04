@@ -13,7 +13,6 @@ module Directions
   SOUTH_WEST = { x: -1, y: +1 }
   NORTH_WEST = { x: -1, y: -1 }
 
-  # Directions where coordinates increase
   ALL = [NORTH, SOUTH, WEST, EAST, NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST]
 end
 
