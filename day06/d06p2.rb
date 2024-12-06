@@ -67,17 +67,17 @@ class Direction
 end
 
 #------------------------------------------------------------------------------
-Guard = Data.define(:position, :direction) do
+Guard = Struct.new(:position, :direction) do
   def next_position
     position + direction.step
   end
 
   def take_step
-    self.class.new(next_position, direction)
+    self.position = next_position
   end
 
   def turn_right
-    self.class.new(position, direction.turn_right)
+    self.direction = direction.turn_right
   end
 
   def inspect
@@ -137,13 +137,14 @@ end
 
 #------------------------------------------------------------------------------
 def walk_once(map, guard)
+  guard = guard.dup
   visited = Set.new
 
   loop do
     if map.blocked?(guard.next_position)
-      guard = guard.turn_right
+      guard.turn_right
     else
-      guard = guard.take_step
+      guard.take_step
       break unless map.cell(guard.position)
       visited.add(guard.position)
     end
@@ -154,13 +155,14 @@ end
 
 #------------------------------------------------------------------------------
 def has_a_loop?(map, guard)
+  guard = guard.dup
   seen_states = Set.new
 
   loop do
     if map.blocked?(guard.next_position)
-      guard = guard.turn_right
+      guard.turn_right
     else
-      guard = guard.take_step
+      guard.take_step
       return false unless map.cell(guard.position)
 
       state = guard.state
