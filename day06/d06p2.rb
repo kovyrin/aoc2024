@@ -91,8 +91,6 @@ end
 
 #------------------------------------------------------------------------------
 class Map
-  BLOCKED = '#'.freeze
-
   def initialize(lines)
     @lines = lines
   end

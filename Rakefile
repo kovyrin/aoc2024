@@ -13,7 +13,7 @@ end
 def run_part(part)
   script = "d%02dp%d.rb" % [@day, part]
   File.chmod(0755, script)
-  system("ruby #{script}")
+  system("time ruby --yjit #{script}")
 end
 
 task :p1 => :env do
