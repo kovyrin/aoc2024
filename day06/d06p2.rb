@@ -171,9 +171,10 @@ end
 
 #------------------------------------------------------------------------------
 input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
-lines = File.readlines(input_file)
+lines = File.readlines(input_file).map(&:strip).reject(&:empty?)
 
 map = Map.new(lines)
+puts "Map size: #{map.width}x#{map.height}"
 guard = nil
 
 map.each_point do |point|
@@ -203,3 +204,4 @@ puts "Blocks with loops: #{blocks_with_loops.size}"
 
 # 1916 - too high
 # 1915 - too high
+# 1721 - correct!
