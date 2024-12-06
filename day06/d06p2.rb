@@ -83,6 +83,10 @@ Guard = Data.define(:position, :direction) do
   def inspect
     "(#{position}: #{direction})"
   end
+
+  def state
+    "#{position.x}:#{position.y}:#{direction}"
+  end
 end
 
 #------------------------------------------------------------------------------
@@ -161,7 +165,7 @@ def has_a_loop?(map, guard)
       guard = guard.take_step
       return false unless map.cell(guard.position)
 
-      state = guard.inspect
+      state = guard.state
       return true if seen_states.include?(state)
 
       seen_states.add(state)
