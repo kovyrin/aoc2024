@@ -1,22 +1,30 @@
 #! /usr/bin/env ruby
 
-OPERATORS = [:+, :*].freeze
+CONCAT_OPERATOR = :|
+OPERATORS = [CONCAT_OPERATOR, :+, :*].freeze
+
+def generate_operators(operators_count)
+  OPERATORS.repeated_permutation(operators_count)
+end
 
 def valid_equation?(eq_parts, result)
-  # One bit per operator in the equation, 0 is '+', 1 is '*'
+  puts "eq_parts: #{eq_parts.inspect}"
   operators_count = eq_parts.size - 1
-  bitmask_max = OPERATORS.size ** operators_count - 1
 
-  0.upto(bitmask_max) do |operators_bitmask|
-    # Convert the bitmask to an array of operators
-    bits = operators_bitmask.to_s(OPERATORS.size).rjust(operators_count, '0').chars.map(&:to_i)
-    operators = bits.map { |bit| OPERATORS[bit] }
+  generate_operators(operators_count).each do |operators|
+    puts "operators: #{operators.inspect}"
 
     # Evaluate the equation with the operators
     parts = eq_parts.dup
     eq_result = parts.shift
     parts.each do |part|
-      eq_result = eq_result.send(operators.shift, part)
+      operator = operators.shift
+      eq_result = if operator == CONCAT_OPERATOR
+        (eq_result.to_s + part.to_s).to_i
+      else
+        eq_result.send(operator, part)
+      end
+
       # Since the operators can only increase the result,
       # we can stop early if we've already exceeded the expected result value part way through
       break if eq_result > result
