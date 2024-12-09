@@ -14,5 +14,5 @@ Doing it in Ruby this year (unless some tasks require something different).
 | [Day 5](https://adventofcode.com/2024/day/5) | ⭐ | ⭐ |
 | [Day 6](https://adventofcode.com/2024/day/6) | ⭐ | ⭐ |
 | [Day 7](https://adventofcode.com/2024/day/7) | ⭐ | ⭐ |
-| [Day 8](https://adventofcode.com/2024/day/8) | ⭐ |   |
+| [Day 8](https://adventofcode.com/2024/day/8) | ⭐ | ⭐ |
 <!--- advent_readme_stars table --->
