@@ -23,6 +23,8 @@ end
 
 # Defragment the disk map by moving the file blocks to the empty space
 resulting_blocks = []
+last_non_moved_block_idx = file_blocks.size - 1
+
 file_blocks.each do |block|
   # We have reached the first moved block, which means the rest will have been moved as well
   break if block.is_moved
@@ -35,10 +37,13 @@ file_blocks.each do |block|
   end
 
   # Collect enough blocks from the end of the list to fill the empty space
-  file_blocks.reverse_each do |tail_block|
-    next if tail_block.is_moved
-    next if tail_block.is_a?(EmptySpace)
-    next if tail_block.length == 0
+  last_non_moved_block_idx.downto(0) do |i|
+    tail_block = file_blocks[i]
+
+    if tail_block.is_moved || tail_block.is_a?(EmptySpace) || tail_block.length == 0
+      last_non_moved_block_idx = i - 1
+      next
+    end
 
     # The tail block fits completely in the empty space
     if tail_block.length < block.length
@@ -46,6 +51,8 @@ file_blocks.each do |block|
       tail_block.is_moved = true
       block.length -= tail_block.length
       block.position += tail_block.length
+
+      last_non_moved_block_idx = i - 1
       next
     end
 
