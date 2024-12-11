@@ -30,7 +30,7 @@ filled_blocks.reverse_each do |block|
   # Look for the first empty block that fits it
   empty_blocks.each do |empty_block|
     next if empty_block.length < block.length
-    next if empty_block.position > block.position
+    break if empty_block.position > block.position
 
     puts "Moving block #{block.block_id} from #{block.position} to #{empty_block.position}"
     block.position = empty_block.position
