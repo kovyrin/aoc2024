@@ -32,9 +32,10 @@ filled_blocks.reverse_each do |block|
     next if empty_block.length < block.length
     break if empty_block.position > block.position
 
-    puts "Moving block #{block.block_id} from #{block.position} to #{empty_block.position}"
+    # Move the block to the empty block
     block.position = empty_block.position
 
+    # Truncate the empty block and move it to the right
     empty_block.length -= block.length
     empty_block.position += block.length
     break
