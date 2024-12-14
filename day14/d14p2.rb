@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+# frozen_string_literal: true
 
 Point = Struct.new(:x, :y) do
   def to_s
@@ -20,24 +20,6 @@ Point = Struct.new(:x, :y) do
   def distance(other)
     (x - other.x).abs + (y - other.y).abs
   end
-
-  def vector(other)
-    Point.new(other.x - x, other.y - y)
-  end
-end
-
-def draw_map(robot_positions)
-  0.upto(MAP_HEIGHT) do |row|
-    0.upto(MAP_WIDTH) do |col|
-      if robot_positions.include?(Point.new(col, row))
-        STDOUT.write('#')
-      else
-        STDOUT.write('.')
-      end
-    end
-    puts
-  end
-  puts
 end
 
 input_file = "input.txt"
@@ -45,12 +27,9 @@ lines = File.readlines(input_file)
 
 robots = []
 lines.each do |line|
-  # p=0,4 v=3,-3
   p, v = line.split(' ').map { |s| s.split('=').last.split(',').map(&:to_i) }
-
   p = Point.new(p[0], p[1])
   v = Point.new(v[0], v[1])
-
   robots << { p:, v: }
 end
 
@@ -61,6 +40,7 @@ min_sum_of_distances = Float::INFINITY
 min_sum_of_distances_seconds = 0
 
 (MAP_WIDTH * MAP_HEIGHT).times do |seconds|
+  # Calculate all positions at once
   robot_positions = robots.map do |robot|
     pos = robot[:p] + robot[:v] * seconds
     pos.x = pos.x % MAP_WIDTH
@@ -73,12 +53,20 @@ min_sum_of_distances_seconds = 0
   # the sum of distances will be minimal
   sum_of_distances = 0
   early_exit = false
-  robot_positions.combination(2).each do |a, b|
-    sum_of_distances += a.distance(b)
-    if sum_of_distances >= min_sum_of_distances
-      early_exit = true
-      break
+
+  0.upto(robot_positions.length - 1) do |i|
+    (i + 1).upto(robot_positions.length - 1) do |j|
+      a = robot_positions[i]
+      b = robot_positions[j]
+
+      sum_of_distances += a.distance(b)
+
+      if sum_of_distances >= min_sum_of_distances
+        early_exit = true
+        break
+      end
     end
+    break if early_exit
   end
 
   next if early_exit
