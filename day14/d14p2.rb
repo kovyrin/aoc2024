@@ -40,13 +40,18 @@ min_sum_of_distances = Float::INFINITY
 min_sum_of_distances_seconds = 0
 
 (MAP_WIDTH * MAP_HEIGHT).times do |seconds|
-  # Calculate all positions at once
   robot_positions = robots.map do |robot|
     pos = robot[:p] + robot[:v] * seconds
     pos.x = pos.x % MAP_WIDTH
     pos.y = pos.y % MAP_HEIGHT
     pos
   end
+
+  # The idea here is that if the robots are spread out across the map,
+  # there is no point in checking the sum of distances, since it will be high
+  x_variance = robot_positions.map { |p| p.x }.uniq.length
+  y_variance = robot_positions.map { |p| p.y }.uniq.length
+  next if x_variance == MAP_WIDTH || y_variance == MAP_HEIGHT
 
   # Find the sum of distances between all robots
   # The idea here is that when they cluster together to form a christmas tree,
