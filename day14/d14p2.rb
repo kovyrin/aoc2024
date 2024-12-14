@@ -20,6 +20,10 @@ Point = Struct.new(:x, :y) do
   def distance(other)
     (x - other.x).abs + (y - other.y).abs
   end
+
+  def modulo(width, height)
+    Point.new(x % width, y % height)
+  end
 end
 
 input_file = "input.txt"
@@ -41,10 +45,7 @@ min_sum_of_distances_seconds = 0
 
 (MAP_WIDTH * MAP_HEIGHT).times do |seconds|
   robot_positions = robots.map do |robot|
-    pos = robot[:p] + robot[:v] * seconds
-    pos.x = pos.x % MAP_WIDTH
-    pos.y = pos.y % MAP_HEIGHT
-    pos
+    (robot[:p] + robot[:v] * seconds).modulo(MAP_WIDTH, MAP_HEIGHT)
   end
 
   # The idea here is that if the robots are spread out across the map,
