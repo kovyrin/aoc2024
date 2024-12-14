@@ -57,7 +57,10 @@ end
 MAP_WIDTH = 101
 MAP_HEIGHT = 103
 
-10000.times do |seconds|
+min_sum_of_distances = Float::INFINITY
+min_sum_of_distances_seconds = 0
+
+(MAP_WIDTH * MAP_HEIGHT).times do |seconds|
   robot_positions = robots.map do |robot|
     pos = robot[:p] + robot[:v] * seconds
     pos.x = pos.x % MAP_WIDTH
@@ -65,17 +68,28 @@ MAP_HEIGHT = 103
     pos
   end
 
-  # Check if the majority of robots are clumped together, displaying a christmas tree
-  x_variance = robot_positions.map(&:x).sort.uniq.count
-  y_variance = robot_positions.map(&:y).sort.uniq.count
+  # Find the sum of distances between all robots
+  # The idea here is that when they cluster together to form a christmas tree,
+  # the sum of distances will be minimal
+  sum_of_distances = 0
+  early_exit = false
+  robot_positions.combination(2).each do |a, b|
+    sum_of_distances += a.distance(b)
+    if sum_of_distances >= min_sum_of_distances
+      early_exit = true
+      break
+    end
+  end
 
-  # Extra-shady: just show the map and let the user look at it until they see the tree 🫠
-  if x_variance < 96 && y_variance < 90
-    system('clear')
-    puts "#{seconds}: vx=#{x_variance}, vy=#{y_variance}"
-    draw_map(robot_positions)
-    gets
+  next if early_exit
+
+  if sum_of_distances < min_sum_of_distances
+    min_sum_of_distances = sum_of_distances
+    min_sum_of_distances_seconds = seconds
+    puts "New minimum sum of distances: #{min_sum_of_distances} at #{min_sum_of_distances_seconds} seconds"
   end
 end
+
+puts "Minimum sum of distances: #{min_sum_of_distances} at #{min_sum_of_distances_seconds} seconds"
 
 # 7709 - correct
