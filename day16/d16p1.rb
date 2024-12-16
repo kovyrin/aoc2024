@@ -12,18 +12,6 @@ Point = Data.define(:x, :y) do
   def +(other)
     Point.new(x + other.x, y + other.y)
   end
-
-  def -(other)
-    Point.new(x - other.x, y - other.y)
-  end
-
-  def distance(other)
-    (x - other.x).abs + (y - other.y).abs
-  end
-
-  def vector(other)
-    Point.new(other.x - x, other.y - y)
-  end
 end
 
 #------------------------------------------------------------------------------
