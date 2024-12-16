@@ -28,11 +28,10 @@ end
 
 #------------------------------------------------------------------------------
 class Direction
-  UP = '^'
-  DOWN = 'v'
-  LEFT = '<'
-  RIGHT = '>'
-  ALL = [UP, DOWN, LEFT, RIGHT].freeze
+  UP = :up
+  DOWN = :down
+  LEFT = :left
+  RIGHT = :right
 
   STEPS = {
     UP => Point.new(0, -1),
@@ -41,46 +40,48 @@ class Direction
     RIGHT => Point.new(1, 0),
   }.freeze
 
+  TURN_RIGHT = {
+    UP => RIGHT,
+    RIGHT => DOWN,
+    DOWN => LEFT,
+    LEFT => UP,
+  }.freeze
+
+  TURN_LEFT = {
+    UP => LEFT,
+    LEFT => DOWN,
+    DOWN => RIGHT,
+    RIGHT => UP,
+  }.freeze
+
+  attr_reader :direction
+
   def initialize(direction)
     @direction = direction
   end
 
-  def to_s
-    @direction
+  # Pre-create instances for each direction
+  INSTANCES = {
+    UP => new(UP),
+    DOWN => new(DOWN),
+    LEFT => new(LEFT),
+    RIGHT => new(RIGHT),
+  }.freeze
+
+  def self.new(direction)
+    INSTANCES[direction] || super
   end
 
-  def inspect
-    @direction.inspect
+  def to_s
+    @direction.to_s
   end
 
   def turn_right
-    new_direction = case @direction
-    when UP
-      RIGHT
-    when RIGHT
-      DOWN
-    when DOWN
-      LEFT
-    when LEFT
-      UP
-    end
-
-    self.class.new(new_direction)
+    INSTANCES[TURN_RIGHT[@direction]]
   end
 
   def turn_left
-    new_direction = case @direction
-    when UP
-      LEFT
-    when LEFT
-      DOWN
-    when DOWN
-      RIGHT
-    when RIGHT
-      UP
-    end
-
-    self.class.new(new_direction)
+    INSTANCES[TURN_LEFT[@direction]]
   end
 
   def step
@@ -138,7 +139,6 @@ class Map
 end
 
 #------------------------------------------------------------------------------
-# Add this class before the walk method
 class PathFinder
   attr_reader :map, :best_finish_score
 
@@ -166,13 +166,17 @@ class PathFinder
     @best_finish_score = [@best_finish_score, score].min
   end
 
+  def max_path_depth
+    @max_path_depth ||= map.width * map.height / 10
+  end
+
   # Modified walk method that's now an instance method
   def walk(position:, direction:, seen: Set.new, score_so_far: 0)
     # Early return if this path is already worse than our best for this situation or in general
     return if score_so_far >= best_score_for(position, direction) || score_so_far >= best_finish_score
 
     # Stop if we're already too deep
-    return if seen.size > map.width * map.height / 10
+    return if seen.size > max_path_depth
 
     # Do not revisit the same point with the same direction.
     position_hash = cache_key(position, direction)
