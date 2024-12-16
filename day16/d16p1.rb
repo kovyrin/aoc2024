@@ -172,7 +172,7 @@ class PathFinder
     return if score_so_far >= best_score_for(position, direction) || score_so_far >= best_finish_score
 
     # Stop if we're already too deep
-    return if seen.size > map.width * map.height
+    return if seen.size > map.width * map.height / 10
 
     # Do not revisit the same point with the same direction.
     position_hash = cache_key(position, direction)
@@ -181,15 +181,13 @@ class PathFinder
     # Do not walk on walls.
     return if map.cell(position) == '#'
 
-    # puts "At #{position} facing #{direction} with score #{score_so_far}, path length #{path.size}"
-
     # Record the best score for reaching this point with this direction.
     update_best_score(position, direction, score_so_far)
 
     # Check if we are at the finish point.
     tile = map.cell(position)
     if tile == 'E'
-      puts "Finished at #{position} with score #{score_so_far}"
+      puts "Finished at #{position} with score #{score_so_far} and path length #{seen.size}"
       update_finish_score(score_so_far)
       return score_so_far
     end
@@ -199,31 +197,16 @@ class PathFinder
     seen << position_hash
 
     # We have three options:
-    results = []
+    results = [
+      # 1. Move forward - score +1
+      walk(position: position + direction.step, direction:, seen:, score_so_far: score_so_far + 1),
 
-    # 1. Move forward - score +1
-    results << walk(
-      position: position + direction.step,
-      direction:,
-      seen:,
-      score_so_far: score_so_far + 1
-    )
+      # 2. Turn left - score +1000
+      walk(position:, direction: direction.turn_left, seen:, score_so_far: score_so_far + 1000),
 
-    # 2. Turn left - score +1000
-    results << walk(
-      position:,
-      direction: direction.turn_left,
-      seen:,
-      score_so_far: score_so_far + 1000
-    )
-
-    # 3. Turn right - score +1000
-    results << walk(
-      position:,
-      direction: direction.turn_right,
-      seen:,
-      score_so_far: score_so_far + 1000
-    )
+      # 3. Turn right - score +1000
+      walk(position:, direction: direction.turn_right, seen:, score_so_far: score_so_far + 1000),
+    ]
 
     results.compact.min
   end
