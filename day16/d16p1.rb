@@ -152,14 +152,13 @@ class PathFinder
     position.to_s + '|' + direction.to_s
   end
 
-  def best_score_for(position, direction)
-    @best_score_cache[cache_key(position, direction)]
+  def best_score_for(position_hash)
+    @best_score_cache[position_hash]
   end
 
-  def update_best_score(position, direction, score)
+  def update_best_score(position_hash, score)
     return if score.nil?
-    key = cache_key(position, direction)
-    @best_score_cache[key] = [@best_score_cache[key], score].min
+    @best_score_cache[position_hash] = score if @best_score_cache[position_hash] > score
   end
 
   def update_finish_score(score)
@@ -167,26 +166,26 @@ class PathFinder
   end
 
   def max_path_depth
-    @max_path_depth ||= map.width * map.height / 10
+    @max_path_depth ||= map.width * map.height / (ENV['REAL'] ? 10 : 2)
   end
 
   # Modified walk method that's now an instance method
   def walk(position:, direction:, seen: Set.new, score_so_far: 0)
-    # Early return if this path is already worse than our best for this situation or in general
-    return if score_so_far >= best_score_for(position, direction) || score_so_far >= best_finish_score
-
-    # Stop if we're already too deep
-    return if seen.size > max_path_depth
-
     # Do not revisit the same point with the same direction.
     position_hash = cache_key(position, direction)
     return if seen.include?(position_hash)
+
+    # Early return if this path is already worse than our best for this situation or in general
+    return if score_so_far >= best_score_for(position_hash) || score_so_far >= best_finish_score
+
+    # Stop if we're already too deep
+    return if seen.size > max_path_depth
 
     # Do not walk on walls.
     return if map.cell(position) == '#'
 
     # Record the best score for reaching this point with this direction.
-    update_best_score(position, direction, score_so_far)
+    update_best_score(position_hash, score_so_far)
 
     # Check if we are at the finish point.
     tile = map.cell(position)
