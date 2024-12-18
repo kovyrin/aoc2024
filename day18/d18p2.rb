@@ -237,56 +237,25 @@ puts "Remaining lines: #{remaining_lines.size}"
 map_lines = map_size.times.map { '.' * map_size }
 clean_map = Map.new(map_lines)
 
-# Parse the coordinates of corrupted cells and mark them on the map
-fallen_lines.each do |p|
-  clean_map.set(p, '#')
-end
+# Mark the fallen lines on the map
+fallen_lines.each { |p| clean_map.set(p, '#') }
 
 start = Point.new(0, 0)
 finish = Point.new(map_size - 1, map_size - 1)
 
 # Now bisect the remaining lines until we find the earliest point that blocks the path
-# We will use this point in the list of lines to figure out how many lines to take
-# Then keep moving the breaking point until we find the last point that still allows the path
-bisect_step = remaining_lines.size / 2
-breaking_point = remaining_lines.size
-last_passable = 0
-
-loop do
+unpassable = (0..remaining_lines.size).bsearch do |take|
   map = clean_map.deep_dup
-  puts "---------------------------------------"
-
-  puts "Applying #{breaking_point} lines out of #{remaining_lines.size}"
-  apply_lines = remaining_lines.take(breaking_point)
-  # puts "Applying #{apply_lines.inspect} lines"
-  apply_lines.each do |p|
-    map.set(p, '#')
-  end
+  puts "Applying #{take} lines out of #{remaining_lines.size}"
+  apply_lines = remaining_lines.take(take)
+  apply_lines.each { |p| map.set(p, '#') }
 
   # Find the path
   path_finder = PathFinder.new(map, finish)
-  shortest_path = path_finder.walk(position: start)
-
-  # If we could still walk the map, we need more lines
-  if shortest_path
-    puts "Found path of length #{shortest_path} after applying #{apply_lines.size} lines, adding #{bisect_step} more lines"
-    last_passable = breaking_point if breaking_point > last_passable
-    breaking_point += bisect_step
-  else
-    if bisect_step == 1
-      puts "The path is blocked by #{apply_lines.size} lines, we're done"
-      puts "Last passable point number: #{last_passable}"
-      puts "Last passable point: #{remaining_lines[last_passable-1]}"
-      puts "First blocking point: #{remaining_lines[last_passable]}"
-      break
-    end
-
-    puts "The path is blocked by #{apply_lines.size} lines, removing #{bisect_step} lines"
-    breaking_point -= bisect_step
-  end
-
-  bisect_step /= 2 unless bisect_step == 1
+  !path_finder.walk(position: start)
 end
+
+puts "Unpassable: #{remaining_lines[unpassable-1]}"
 
 # 42,33 - incorrect
 # 16,44 - correct
