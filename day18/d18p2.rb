@@ -163,10 +163,6 @@ class PathFinder
     end
   end
 
-  def max_path_depth
-    @max_path_depth ||= map.width * map.height
-  end
-
   # Modified walk method that's now an instance method
   def walk(position:, seen: Set.new, path: Set.new, score_so_far: 0)
     # Do not walk on walls or off the map
@@ -182,9 +178,6 @@ class PathFinder
     else
       return if score_so_far >= best_score_for(position) || score_so_far >= best_finish_score
     end
-
-    # Stop if we're already too deep
-    return if seen.size > max_path_depth
 
     # Record the best score for reaching this point with this direction.
     update_best_score(position, score_so_far)
@@ -270,9 +263,6 @@ loop do
     map.set(p, '#')
   end
 
-  # Draw the map
-  # puts map.inspect
-
   # Find the path
   path_finder = PathFinder.new(map, finish)
   shortest_path = path_finder.walk(position: start)
@@ -299,3 +289,4 @@ loop do
 end
 
 # 42,33 - incorrect
+# 16,44 - correct
