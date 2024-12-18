@@ -137,12 +137,6 @@ class PathFinder
 
     @best_score_cache = Hash.new(Float::INFINITY)
     @best_finish_score = Float::INFINITY
-    @recording_cells = false
-    @best_finish_score_cells = Set.new
-  end
-
-  def enable_recording_cells!
-    @recording_cells = true
   end
 
   def best_score_for(position)
@@ -155,12 +149,7 @@ class PathFinder
   end
 
   def update_finish_score(score, path)
-    if score < best_finish_score
-      @best_finish_score = score
-      @best_finish_score_cells = path.dup if @recording_cells
-    elsif score == best_finish_score
-      @best_finish_score_cells.merge(path) if @recording_cells
-    end
+    @best_finish_score = score if score < best_finish_score
   end
 
   # Modified walk method that's now an instance method
@@ -173,20 +162,10 @@ class PathFinder
     return if seen.include?(position.to_s)
 
     # Early return if this path is already worse than our best for this situation or in general
-    if @recording_cells
-      return if score_so_far > best_score_for(position) || score_so_far > best_finish_score
-    else
-      return if score_so_far >= best_score_for(position) || score_so_far >= best_finish_score
-    end
+    return if score_so_far >= best_score_for(position) || score_so_far >= best_finish_score
 
     # Record the best score for reaching this point with this direction.
     update_best_score(position, score_so_far)
-
-    # Add the current position to the path
-    if @recording_cells
-      path = path.dup
-      path << position
-    end
 
     # Check if we are at the finish point.
     if position == finish
