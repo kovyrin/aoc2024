@@ -84,30 +84,35 @@ class PathFinder
   end
 
   def update_score_for(position, score)
-    @best_score_for[position] = score if score < @best_score_for[position]
+    @best_score_for[position.hash] = score if score < @best_score_for[position.hash]
   end
 
   def score_for(position)
-    @best_score_for[position]
+    @best_score_for[position.hash]
   end
 
   def walk(position:)
-    # Do not walk on walls or off the map
-    cell = map.cell(position)
-    return if cell == '#' || cell.nil?
+    queue = [position]
 
-    steps = path.size
-    return if steps >= score_for(position)
+    while (current_pos = queue.shift)
+      # Skip invalid positions
+      cell = map.cell(current_pos)
+      next if cell == '#' || cell.nil?
 
-    path << position
-    update_score_for(position, steps)
+      steps = @path.size
+      next if steps >= score_for(current_pos)
 
-    # Check if we are at the finish point.
-    return path if position == finish
+      # Update best score and path
+      path << current_pos
+      update_score_for(current_pos, steps)
 
-    Direction::ALL.each do |dir|
-      res = walk(position: position + Direction.step(dir))
-      return res if res
+      # Check if we reached the finish
+      return path if current_pos == finish
+
+      # Add neighbors to queue
+      Direction::ALL.each do |dir|
+        queue << (current_pos + Direction.step(dir))
+      end
     end
 
     nil
