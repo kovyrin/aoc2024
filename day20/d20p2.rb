@@ -41,20 +41,6 @@ class Direction
     RIGHT => Point.new(1, 0),
   }.freeze
 
-  TURN_RIGHT = {
-    UP => RIGHT,
-    RIGHT => DOWN,
-    DOWN => LEFT,
-    LEFT => UP,
-  }.freeze
-
-  TURN_LEFT = {
-    UP => LEFT,
-    LEFT => DOWN,
-    DOWN => RIGHT,
-    RIGHT => UP,
-  }.freeze
-
   attr_reader :direction
 
   def initialize(direction)
@@ -79,14 +65,6 @@ class Direction
 
   def to_s
     @direction.to_s
-  end
-
-  def turn_right
-    INSTANCES[TURN_RIGHT[@direction]]
-  end
-
-  def turn_left
-    INSTANCES[TURN_LEFT[@direction]]
   end
 
   def step
