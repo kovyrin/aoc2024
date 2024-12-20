@@ -163,7 +163,7 @@ path_finder = PathFinder.new(map, start)
 path = path_finder.walk(position: finish)
 
 cheat_length = 20
-cheat_successes = Hash.new(0)
+cheat_successes = 0
 success_threshold = ENV['REAL'] ? 100 : 50
 
 path.each do |point|
@@ -176,10 +176,10 @@ path.each do |point|
     savings = score - cheat_score - jump_distance
 
     # Only count cheats as successes if they bring us closer to the finish
-    cheat_successes[savings] += 1 if savings >= success_threshold
+    cheat_successes += 1 if savings >= success_threshold
   end
 end
 
-puts "Total successes: #{cheat_successes.values.sum}"
+puts "Total successes: #{cheat_successes}"
 
 # 993178 - correct
