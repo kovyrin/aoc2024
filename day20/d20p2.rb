@@ -2,16 +2,12 @@
 
 #------------------------------------------------------------------------------
 Point = Data.define(:x, :y) do
-  def to_s
-    "[#{x},#{y}]"
+  def hash
+    x * 1000 + y
   end
 
   def +(other)
     Point.new(x + other.x, y + other.y)
-  end
-
-  def manhattan_distance(other)
-    (x - other.x).abs + (y - other.y).abs
   end
 
   def each_within_manhattan_distance(distance)
@@ -27,11 +23,12 @@ Point = Data.define(:x, :y) do
 end
 
 #------------------------------------------------------------------------------
-class Direction
+module Direction
   UP = :up
   DOWN = :down
   LEFT = :left
   RIGHT = :right
+  ALL = [UP, DOWN, LEFT, RIGHT].freeze
 
   STEPS = {
     UP => Point.new(0, -1),
@@ -40,34 +37,8 @@ class Direction
     RIGHT => Point.new(1, 0),
   }.freeze
 
-  attr_reader :direction
-
-  def initialize(direction)
-    @direction = direction
-  end
-
-  # Pre-create instances for each direction
-  INSTANCES = {
-    UP => new(UP),
-    DOWN => new(DOWN),
-    LEFT => new(LEFT),
-    RIGHT => new(RIGHT),
-  }.freeze
-
-  def self.new(direction)
-    INSTANCES[direction] || super
-  end
-
   def self.step(direction)
     STEPS[direction]
-  end
-
-  def to_s
-    @direction.to_s
-  end
-
-  def step
-    STEPS[@direction]
   end
 end
 
@@ -113,11 +84,11 @@ class PathFinder
   end
 
   def update_score_for(position, score)
-    @best_score_for[position.to_s] = score if score < @best_score_for[position.to_s]
+    @best_score_for[position] = score if score < @best_score_for[position]
   end
 
   def score_for(position)
-    @best_score_for[position.to_s]
+    @best_score_for[position]
   end
 
   def walk(position:)
@@ -134,10 +105,12 @@ class PathFinder
     # Check if we are at the finish point.
     return path if position == finish
 
-    walk(position: position + Direction.step(Direction::UP)) ||
-      walk(position: position + Direction.step(Direction::DOWN)) ||
-      walk(position: position + Direction.step(Direction::LEFT)) ||
-      walk(position: position + Direction.step(Direction::RIGHT))
+    Direction::ALL.each do |dir|
+      res = walk(position: position + Direction.step(dir))
+      return res if res
+    end
+
+    nil
   end
 end
 
