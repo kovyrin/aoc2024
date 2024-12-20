@@ -145,13 +145,12 @@ end
 
 #------------------------------------------------------------------------------
 class PathFinder
-  attr_reader :map, :best_finish_score, :finish, :best_path
+  attr_reader :map, :finish, :final_path
 
   def initialize(map, finish)
     @map = map
     @finish = finish
-    @best_finish_score = Float::INFINITY
-    @best_path = nil
+    @final_path = nil
     @best_score_for = Hash.new(Float::INFINITY) # best score for a given position
   end
 
@@ -163,16 +162,9 @@ class PathFinder
     @best_score_for[position.to_s]
   end
 
-  def update_finish_score(score, path)
-    if score < best_finish_score
-      @best_finish_score = score
-      @best_path = path
-    end
-  end
-
   def walk_without_cheating(position:, path: [])
     steps = path.size
-    return if steps >= best_finish_score || steps >= score_for(position)
+    return if steps >= score_for(position)
 
     # Do not walk on walls or off the map
     cell = map.cell(position)
@@ -183,7 +175,7 @@ class PathFinder
 
     # Check if we are at the finish point.
     if position == finish
-      update_finish_score(steps, path)
+      @final_path = path
       return steps
     end
 
@@ -217,13 +209,11 @@ path_finder = PathFinder.new(map, start)
 baseline_score = path_finder.walk_without_cheating(position: finish)
 puts "Baseline score: #{baseline_score}"
 
-track_path = path_finder.best_path.reverse
-
 cheat_length = 20
 cheat_successes = Hash.new(0)
 success_threshold = ENV['REAL'] ? 100 : 50
 
-track_path.each do |point|
+path_finder.final_path.each do |point|
   score = path_finder.score_for(point)
 
   # Check all possible jumps from the current point where we land back on the track
