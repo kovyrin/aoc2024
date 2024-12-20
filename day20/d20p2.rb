@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------
 Point = Data.define(:x, :y) do
   def to_s
-    "[#{x}, #{y}]"
+    "[#{x},#{y}]"
   end
 
   def +(other)
@@ -246,7 +246,6 @@ track_path.each do |point|
   end
 end
 
-puts "----------------------------------------"
 puts "Total successes: #{cheat_successes.values.sum}"
 
 # 993178 - correct
