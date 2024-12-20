@@ -170,13 +170,9 @@ class PathFinder
     end
   end
 
-  def max_path_depth
-    @max_path_depth ||= map.width * map.height / 2
-  end
-
-  def walk_without_cheating(position:, steps: 0, path: [])
-    # Stop if we're already too deep
-    return if steps > max_path_depth || steps >= best_finish_score || steps >= score_for(position)
+  def walk_without_cheating(position:, path: [])
+    steps = path.size
+    return if steps >= best_finish_score || steps >= score_for(position)
 
     # Do not walk on walls or off the map
     cell = map.cell(position)
@@ -191,15 +187,10 @@ class PathFinder
       return steps
     end
 
-    steps += 1
-    results = [
-      walk_without_cheating(position: position + Direction.step(Direction::UP), steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::DOWN), steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::LEFT), steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), steps:, path:),
-    ]
-
-    results.compact.min
+    walk_without_cheating(position: position + Direction.step(Direction::UP), path:) ||
+      walk_without_cheating(position: position + Direction.step(Direction::DOWN), path:) ||
+      walk_without_cheating(position: position + Direction.step(Direction::LEFT), path:) ||
+      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), path:)
   end
 end
 
