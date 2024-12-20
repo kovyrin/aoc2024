@@ -174,7 +174,7 @@ class PathFinder
     @max_path_depth ||= map.width * map.height / 2
   end
 
-  def walk_without_cheating(position:, seen: Set.new, steps: 0, path: [])
+  def walk_without_cheating(position:, steps: 0, path: [])
     # Stop if we're already too deep
     return if steps > max_path_depth || steps >= best_finish_score || steps >= score_for(position)
 
@@ -182,11 +182,7 @@ class PathFinder
     cell = map.cell(position)
     return if cell == '#' || cell.nil?
 
-    # Do not revisit the same point
-    return if seen.include?(position.to_s)
-    seen = (seen.dup << position.to_s)
     path = (path.dup << position)
-
     update_score_for(position, steps)
 
     # Check if we are at the finish point.
@@ -197,10 +193,10 @@ class PathFinder
 
     steps += 1
     results = [
-      walk_without_cheating(position: position + Direction.step(Direction::UP), seen:, steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::DOWN), seen:, steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::LEFT), seen:, steps:, path:),
-      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), seen:, steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::UP), steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::DOWN), steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::LEFT), steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), steps:, path:),
     ]
 
     results.compact.min
