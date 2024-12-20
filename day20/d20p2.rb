@@ -163,12 +163,12 @@ class PathFinder
   end
 
   def walk(position:)
-    steps = path.size
-    return if steps >= score_for(position)
-
     # Do not walk on walls or off the map
     cell = map.cell(position)
     return if cell == '#' || cell.nil?
+
+    steps = path.size
+    return if steps >= score_for(position)
 
     path << position
     update_score_for(position, steps)
