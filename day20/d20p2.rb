@@ -129,8 +129,9 @@ path.each do |point|
   score = path_finder.score_for_position(point)
 
   # Replace each_within_manhattan_distance with direct nested loops
-  (-cheat_length..cheat_length).each do |x_change|
-    (-cheat_length..cheat_length).each do |y_change|
+  cheat_range = (-cheat_length..cheat_length)
+  cheat_range.each do |x_change|
+    cheat_range.each do |y_change|
       manhattan_distance = x_change.abs + y_change.abs
       next if manhattan_distance > cheat_length || manhattan_distance == 0
 
