@@ -53,7 +53,7 @@ end
 
 #------------------------------------------------------------------------------
 class PathFinder
-  attr_reader :map, :finish, :path
+  attr_reader :map, :finish, :path, :score_for
 
   def initialize(map, finish)
     @map = map
@@ -142,7 +142,8 @@ path.each do |point|
       y = point.y + y_change
 
       # Check how much better it would make our score (how much it would save us in steps)
-      cheat_score = path_finder.score_for_x_y(x, y)
+      hash = y * 1000 + x
+      cheat_score = path_finder.score_for[hash]
       next if cheat_score == Float::INFINITY
 
       # Only count cheats as successes if they bring us closer to the finish
