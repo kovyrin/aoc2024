@@ -67,11 +67,6 @@ class PathFinder
     @score_for[hash] = score if score < @score_for[hash]
   end
 
-  def score_for_x_y(x, y)
-    hash = y * 1000 + x
-    @score_for[hash]
-  end
-
   def score_for_position(position)
     score_for_x_y(position.x, position.y)
   end
