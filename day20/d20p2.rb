@@ -21,7 +21,7 @@ Point = Data.define(:x, :y) do
         manhattan_distance = x_change.abs + y_change.abs
         next if manhattan_distance > distance || manhattan_distance == 0
 
-        yield self + Point.new(x_change, y_change)
+        yield self + Point.new(x_change, y_change), manhattan_distance
       end
     end
   end
@@ -208,7 +208,6 @@ input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
 lines = File.readlines(input_file).map(&:strip).reject(&:empty?)
 
 map = Map.new(lines)
-puts map.inspect
 
 start = nil
 finish = nil
@@ -237,11 +236,10 @@ track_path.each do |point|
   score = path_finder.score_for(point)
 
   # Check all possible jumps from the current point where we land back on the track
-  point.each_within_manhattan_distance(cheat_length) do |landing|
+  point.each_within_manhattan_distance(cheat_length) do |landing, jump_distance|
     # Check how much better it would make our score (how much it would save us in steps)
-    jump_length = landing.manhattan_distance(point)
     cheat_score = path_finder.score_for(landing)
-    savings = score - cheat_score - jump_length
+    savings = score - cheat_score - jump_distance
 
     # Only count cheats as successes if they bring us closer to the finish
     cheat_successes[savings] += 1 if savings >= success_threshold
@@ -249,11 +247,6 @@ track_path.each do |point|
 end
 
 puts "----------------------------------------"
-puts "Cheat successes:"
-cheat_successes.sort_by { |savings, count| savings }.each do |savings, count|
-  puts " - #{savings}: #{count}"
-end
-
 puts "Total successes: #{cheat_successes.values.sum}"
 
 # 993178 - correct
