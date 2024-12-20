@@ -129,104 +129,62 @@ end
 
 #------------------------------------------------------------------------------
 class PathFinder
-  attr_reader :map, :best_finish_score, :finish
+  attr_reader :map, :best_finish_score, :finish, :best_path
 
   def initialize(map, finish)
     @map = map
     @finish = finish
     @best_finish_score = Float::INFINITY
+    @best_path = nil
+    @best_score_for = Hash.new(Float::INFINITY) # best score for a given position
   end
 
-  def update_finish_score(score)
-    @best_finish_score = score if score < best_finish_score
+  def update_score_for(position, score)
+    @best_score_for[position.to_s] = score if score < @best_score_for[position.to_s]
+  end
+
+  def score_for(position)
+    @best_score_for[position.to_s]
+  end
+
+  def update_finish_score(score, path)
+    if score < best_finish_score
+      @best_finish_score = score
+      @best_path = path
+    end
   end
 
   def max_path_depth
     @max_path_depth ||= map.width * map.height / 2
   end
 
-  def walk_without_cheating(position:, seen: Set.new, score_so_far: 0)
+  def walk_without_cheating(position:, seen: Set.new, steps: 0, path: [])
     # Stop if we're already too deep
-    return if score_so_far > max_path_depth
+    return if steps > max_path_depth || steps >= best_finish_score || steps >= score_for(position)
 
     # Do not walk on walls or off the map
     cell = map.cell(position)
     return if cell == '#' || cell.nil?
 
-    # Early return if this path is already worse than our best for this situation or in general
-    return if score_so_far >= best_finish_score
-
     # Do not revisit the same point
     return if seen.include?(position.to_s)
     seen = (seen.dup << position.to_s)
+    path = (path.dup << position)
+
+    update_score_for(position, steps)
 
     # Check if we are at the finish point.
     if position == finish
-      update_finish_score(score_so_far)
-      return score_so_far
-    end
-
-    next_score = score_so_far + 1
-    results = [
-      walk_without_cheating(position: position + Direction.step(Direction::UP), seen:, score_so_far: next_score),
-      walk_without_cheating(position: position + Direction.step(Direction::DOWN), seen:, score_so_far: next_score),
-      walk_without_cheating(position: position + Direction.step(Direction::LEFT), seen:, score_so_far: next_score),
-      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), seen:, score_so_far: next_score),
-    ]
-
-    results.compact.min
-  end
-end
-
-#------------------------------------------------------------------------------
-class PathFinderWithCheating < PathFinder
-  attr_reader :cheat_step, :target_score, :cheated
-
-  def initialize(map, finish, cheat_step, target_score)
-    super(map, finish)
-    @cheat_step = cheat_step
-    @target_score = target_score
-    @cheated = false
-  end
-
-  # The same walk as above, but allowed to walk on walls during steps cheat_step and cheat_step + 1
-  def walk_with_cheating(position:, seen: Set.new, steps: 0)
-    # Stop if we're already too deep
-    return if steps > max_path_depth || steps > target_score
-
-    # Do not walk on walls or off the map
-    cell = map.cell(position)
-    return if cell.nil?
-    if cell == '#'
-      if steps == cheat_step || steps == cheat_step + 1
-        @cheated = true # we cheated during this step and walked on a wall
-      else
-        return nil # can't walk on walls
-      end
-    end
-
-    # We were supposed to cheat, but we didn't (since there were no walls to walk on)
-    return if steps > cheat_step + 1 && !cheated
-
-    # Early return if this path is already worse than our best for this situation or in general
-    return if steps >= best_finish_score
-
-    # Do not revisit the same point
-    return if seen.include?(position.to_s)
-    seen = (seen.dup << position.to_s)
-
-    # Check if we are at the finish point.
-    if position == finish
-      update_finish_score(steps)
+      update_finish_score(steps, path)
       return steps
     end
 
     steps += 1
     results = [
-      walk_with_cheating(position: position + Direction.step(Direction::UP), seen:, steps:),
-      walk_with_cheating(position: position + Direction.step(Direction::DOWN), seen:, steps:),
-      walk_with_cheating(position: position + Direction.step(Direction::LEFT), seen:, steps:),
-      walk_with_cheating(position: position + Direction.step(Direction::RIGHT), seen:, steps:),
+      walk_without_cheating(position: position + Direction.step(Direction::UP), seen:, steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::DOWN), seen:, steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::LEFT), seen:, steps:, path:),
+      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), seen:, steps:, path:),
     ]
 
     results.compact.min
@@ -251,33 +209,58 @@ map.each_point do |point|
   end
 end
 
-path_finder = PathFinder.new(map, finish)
-baseline_score = path_finder.walk_without_cheating(position: start)
+# Walk backwards from the finish point to the start point
+# This means that the best score we record for each point will be the distance from that point to the finish
+path_finder = PathFinder.new(map, start)
+baseline_score = path_finder.walk_without_cheating(position: finish)
 puts "Baseline score: #{baseline_score}"
 
-# We want to aim for saving at least 100 steps by cheating
-target_score = ENV['REAL'] ? baseline_score - 100 : baseline_score
+track_path = path_finder.best_path.reverse
 
-savings_counts = Hash.new(0)
-0.upto(target_score-1) do |cheat_step|
-  puts "Cheating starting at #{cheat_step} steps..."
-  path_finder = PathFinderWithCheating.new(map, finish, cheat_step, target_score)
-  score = path_finder.walk_with_cheating(position: start)
-  unless score
-    puts "- Failed to cheat during step #{cheat_step}"
-    next
-  end
+cheat_length = 2
+cheat_successes = Hash.new(0)
 
-  savings = baseline_score - score
+track_path.each do |point|
+  score = path_finder.score_for(point)
+  puts "Point: #{point}, distance to finish: #{score}"
 
-  if savings > 0
-    savings_counts[savings] += 1
-    puts "Successfully cheated during step #{cheat_step} and saved #{savings} steps"
-  else
-    puts "Failed to cheat during step #{cheat_step}"
+  # Check all possible jumps from the current point where we land back on the track
+  0.upto(cheat_length * 2) do |x|
+    0.upto(cheat_length * 2) do |y|
+      x_change = x - cheat_length
+      y_change = y - cheat_length
+
+      jump_length = x_change.abs + y_change.abs
+      next if jump_length < 1 || jump_length > cheat_length
+
+      puts " - Attempting jump: #{x_change}, #{y_change}"
+      jump = Point.new(x_change, y_change)
+      landing = point + jump
+      landing_cell = map.cell(landing)
+      next if landing_cell == '#' || landing_cell.nil? # cannot land on walls or off the map
+
+      puts "   - Looks like a good landing: #{landing}"
+
+      # Check how much better it would make our score (how much it would save us in steps)
+      cheat_score = path_finder.score_for(landing)
+      savings = score - cheat_score - jump_length
+
+      # Only count cheats as successes if they bring us closer to the finish
+      if savings > 0
+        puts "   - Savings: #{savings}"
+        cheat_successes[savings] += 1
+      end
+    end
   end
 end
 
-savings_counts.sort_by { |savings, count| savings }.each do |savings, count|
-  puts "Saved #{savings} steps: #{count} times"
+puts "----------------------------------------"
+puts "Cheat successes:"
+cheat_successes.sort_by { |savings, count| -savings }.each do |savings, count|
+  puts " - #{savings}: #{count}"
+end
+
+if ENV['REAL']
+  threshold = 100
+  puts "Total jumps saving #{threshold} or more steps: #{cheat_successes.select { |savings, count| savings >= threshold }.values.sum}"
 end
