@@ -145,12 +145,13 @@ end
 
 #------------------------------------------------------------------------------
 class PathFinder
-  attr_reader :map, :finish
+  attr_reader :map, :finish, :path
 
   def initialize(map, finish)
     @map = map
     @finish = finish
     @best_score_for = Hash.new(Float::INFINITY) # best score for a given position
+    @path = []
   end
 
   def update_score_for(position, score)
@@ -161,7 +162,7 @@ class PathFinder
     @best_score_for[position.to_s]
   end
 
-  def walk_without_cheating(position:, path: [])
+  def walk(position:)
     steps = path.size
     return if steps >= score_for(position)
 
@@ -175,10 +176,10 @@ class PathFinder
     # Check if we are at the finish point.
     return path if position == finish
 
-    walk_without_cheating(position: position + Direction.step(Direction::UP), path:) ||
-      walk_without_cheating(position: position + Direction.step(Direction::DOWN), path:) ||
-      walk_without_cheating(position: position + Direction.step(Direction::LEFT), path:) ||
-      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), path:)
+    walk(position: position + Direction.step(Direction::UP)) ||
+      walk(position: position + Direction.step(Direction::DOWN)) ||
+      walk(position: position + Direction.step(Direction::LEFT)) ||
+      walk(position: position + Direction.step(Direction::RIGHT))
   end
 end
 
@@ -201,7 +202,7 @@ end
 # Walk backwards from the finish point to the start point
 # This means that the best score we record for each point will be the distance from that point to the finish
 path_finder = PathFinder.new(map, start)
-path = path_finder.walk_without_cheating(position: finish)
+path = path_finder.walk(position: finish)
 
 cheat_length = 20
 cheat_successes = Hash.new(0)
