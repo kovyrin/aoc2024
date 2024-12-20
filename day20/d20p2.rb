@@ -68,7 +68,8 @@ class PathFinder
   end
 
   def score_for_position(position)
-    score_for_x_y(position.x, position.y)
+    hash = position.y * 1000 + position.x
+    @score_for[hash]
   end
 
   def walk(position:)
