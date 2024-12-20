@@ -42,26 +42,20 @@ end
 class Map
   def initialize(lines)
     @lines = lines
-  end
-
-  def width
-    @lines.first.size
-  end
-
-  def height
-    @lines.size
+    @width = lines.first.size
+    @height = lines.size
   end
 
   def cell(point)
-    return nil if point.y < 0 || point.y >= height
-    return nil if point.x < 0 || point.x >= width
+    return nil if point.y < 0 || point.y >= @height
+    return nil if point.x < 0 || point.x >= @width
 
     @lines[point.y][point.x]
   end
 
   def each_point
-    0.upto(height - 1) do |y|
-      0.upto(width - 1) do |x|
+    0.upto(@height - 1) do |y|
+      0.upto(@width - 1) do |x|
         yield Point.new(x, y)
       end
     end
