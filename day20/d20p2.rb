@@ -99,18 +99,6 @@ class Map
       end
     end
   end
-
-  def to_s
-    @lines.join("\n")
-  end
-
-  def inspect
-    result = <<~MAP
-      Map #{width}x#{height}:
-      #{to_s}
-    MAP
-    result
-  end
 end
 
 #------------------------------------------------------------------------------
