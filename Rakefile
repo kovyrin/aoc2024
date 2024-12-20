@@ -13,6 +13,7 @@ end
 def run_part(part)
   script = "d%02dp%d.rb" % [@day, part]
   File.chmod(0755, script)
+  ENV['RUBY_THREAD_VM_STACK_SIZE'] = '5000000'
   system("time ruby --yjit #{script}")
 end
 

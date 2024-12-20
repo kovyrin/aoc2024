@@ -57,6 +57,10 @@ class Direction
     INSTANCES[direction] || super
   end
 
+  def self.step(direction)
+    STEPS[direction]
+  end
+
   def to_s
     @direction.to_s
   end
@@ -125,7 +129,7 @@ end
 
 #------------------------------------------------------------------------------
 class PathFinder
-  attr_reader :map, :best_finish_score, :best_finish_score_cells, :finish
+  attr_reader :map, :best_finish_score, :finish
 
   def initialize(map, finish)
     @map = map
@@ -133,12 +137,6 @@ class PathFinder
 
     @best_score_cache = Hash.new(Float::INFINITY)
     @best_finish_score = Float::INFINITY
-    @recording_cells = false
-    @best_finish_score_cells = Set.new
-  end
-
-  def enable_recording_cells!
-    @recording_cells = true
   end
 
   def best_score_for(position)
@@ -150,16 +148,18 @@ class PathFinder
     @best_score_cache[position.to_s] = score if @best_score_cache[position.to_s] > score
   end
 
-  def update_finish_score(score, path)
-    if score < best_finish_score
-      @best_finish_score = score
-      @best_finish_score_cells = path.dup if @recording_cells
-    elsif score == best_finish_score
-      @best_finish_score_cells.merge(path) if @recording_cells
-    end
+  def update_finish_score(score)
+    @best_finish_score = score if score < best_finish_score
   end
 
-  def walk(position:, seen: Set.new, path: Set.new, score_so_far: 0)
+  def max_path_depth
+    @max_path_depth ||= map.width * map.height / 2
+  end
+
+  def walk_without_cheating(position:, seen: Set.new, score_so_far: 0)
+    # Stop if we're already too deep
+    return if score_so_far > max_path_depth
+
     # Do not walk on walls or off the map
     cell = map.cell(position)
     return if cell == '#' || cell.nil?
@@ -168,25 +168,15 @@ class PathFinder
     return if seen.include?(position.to_s)
 
     # Early return if this path is already worse than our best for this situation or in general
-    if @recording_cells
-      return if score_so_far > best_score_for(position) || score_so_far > best_finish_score
-    else
-      return if score_so_far >= best_score_for(position) || score_so_far >= best_finish_score
-    end
+    return if score_so_far >= best_score_for(position) || score_so_far >= best_finish_score
 
     # Record the best score for reaching this point with this direction.
     update_best_score(position, score_so_far)
 
-    # Add the current position to the path
-    if @recording_cells
-      path = path.dup
-      path << position
-    end
-
     # Check if we are at the finish point.
     if position == finish
       puts "Finished at #{position} with score #{score_so_far} and path length #{seen.size}"
-      update_finish_score(score_so_far, path)
+      update_finish_score(score_so_far)
       return score_so_far
     end
 
@@ -198,52 +188,41 @@ class PathFinder
     next_score = score_so_far + 1
     results = [
       # 1. Move up
-      walk(position: position + Direction.new(Direction::UP).step, seen:, path:, score_so_far: next_score),
+      walk_without_cheating(position: position + Direction.step(Direction::UP), seen:, score_so_far: next_score),
 
       # 2. Move down
-      walk(position: position + Direction.new(Direction::DOWN).step, seen:, path:, score_so_far: next_score),
+      walk_without_cheating(position: position + Direction.step(Direction::DOWN), seen:, score_so_far: next_score),
 
       # 3. Move left
-      walk(position: position + Direction.new(Direction::LEFT).step, seen:, path:, score_so_far: next_score),
+      walk_without_cheating(position: position + Direction.step(Direction::LEFT), seen:, score_so_far: next_score),
 
       # 4. Move right
-      walk(position: position + Direction.new(Direction::RIGHT).step, seen:, path:, score_so_far: next_score),
+      walk_without_cheating(position: position + Direction.step(Direction::RIGHT), seen:, score_so_far: next_score),
     ]
 
     results.compact.min
   end
 end
 
+
 #------------------------------------------------------------------------------
 input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
-lines = File.readlines(input_file)
+lines = File.readlines(input_file).map(&:strip).reject(&:empty?)
 
-map_size = ENV['REAL'] ? 71 : 7
-
-bytes_fallen = ENV['REAL'] ? 1024 : 12
-lines = lines.take(bytes_fallen)
-
-# Generate an empty map of the given size
-map_lines = map_size.times.map { '.' * map_size }
-map = Map.new(map_lines)
-
-# Parse the coordinates of corrupted cells and mark them on the map
-lines.each do |line|
-  x, y = line.split(',').map(&:to_i)
-  p = Point.new(x, y)
-  map.set(p, '#')
-end
-
-# Draw the map
+map = Map.new(lines)
 puts map.inspect
 
-# Walk the map
-start = Point.new(0, 0)
-finish = Point.new(map_size - 1, map_size - 1)
+start = nil
+finish = nil
 
-# Find the path
+map.each_point do |point|
+  if map.cell(point) == 'S'
+    start = point
+  elsif map.cell(point) == 'E'
+    finish = point
+  end
+end
+
 path_finder = PathFinder.new(map, finish)
-shortest_path = path_finder.walk(position: start)
-
-# Print the path
-puts shortest_path.inspect
+baseline_score = path_finder.walk_without_cheating(position: start)
+puts "Baseline score: #{baseline_score}"
