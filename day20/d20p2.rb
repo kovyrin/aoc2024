@@ -10,7 +10,6 @@ Point = Data.define(:x, :y) do
     Point.new(x + other.x, y + other.y)
   end
 
-
   def manhattan_distance(other)
     (x - other.x).abs + (y - other.y).abs
   end
@@ -91,13 +90,6 @@ class Map
     return nil if point.x < 0 || point.x >= width
 
     @lines[point.y][point.x]
-  end
-
-  def set(point, value)
-    return nil if point.y < 0 || point.y >= height
-    return nil if point.x < 0 || point.x >= width
-
-    @lines[point.y][point.x] = value
   end
 
   def each_point
