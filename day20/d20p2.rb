@@ -2,10 +2,6 @@
 
 #------------------------------------------------------------------------------
 Point = Data.define(:x, :y) do
-  def hash
-    x * 1000 + y
-  end
-
   def +(other)
     Point.new(x + other.x, y + other.y)
   end
@@ -16,7 +12,7 @@ Point = Data.define(:x, :y) do
         manhattan_distance = x_change.abs + y_change.abs
         next if manhattan_distance > distance || manhattan_distance == 0
 
-        yield self + Point.new(x_change, y_change), manhattan_distance
+        yield self.x + x_change, self.y + y_change, manhattan_distance
       end
     end
   end
@@ -79,16 +75,22 @@ class PathFinder
   def initialize(map, finish)
     @map = map
     @finish = finish
-    @best_score_for = Hash.new(Float::INFINITY) # best score for a given position
+    @score_for = Hash.new(Float::INFINITY) # best score for a given position
     @path = []
   end
 
-  def update_score_for(position, score)
-    @best_score_for[position.hash] = score if score < @best_score_for[position.hash]
+  def update_score_for_position(position, score)
+    hash = position.y * 1000 + position.x
+    @score_for[hash] = score if score < @score_for[hash]
   end
 
-  def score_for(position)
-    @best_score_for[position.hash]
+  def score_for_x_y(x, y)
+    hash = y * 1000 + x
+    @score_for[hash]
+  end
+
+  def score_for_position(position)
+    score_for_x_y(position.x, position.y)
   end
 
   def walk(position:)
@@ -100,11 +102,11 @@ class PathFinder
       next if cell == '#' || cell.nil?
 
       steps = @path.size
-      next if steps >= score_for(current_pos)
+      next if steps >= score_for_position(current_pos)
 
       # Update best score and path
       path << current_pos
-      update_score_for(current_pos, steps)
+      update_score_for_position(current_pos, steps)
 
       # Check if we reached the finish
       return path if current_pos == finish
@@ -145,12 +147,12 @@ cheat_successes = 0
 success_threshold = ENV['REAL'] ? 100 : 50
 
 path.each do |point|
-  score = path_finder.score_for(point)
+  score = path_finder.score_for_position(point)
 
   # Check all possible jumps from the current point where we land back on the track
-  point.each_within_manhattan_distance(cheat_length) do |landing, jump_distance|
+  point.each_within_manhattan_distance(cheat_length) do |x, y, jump_distance|
     # Check how much better it would make our score (how much it would save us in steps)
-    cheat_score = path_finder.score_for(landing)
+    cheat_score = path_finder.score_for_x_y(x, y)
     savings = score - cheat_score - jump_distance
 
     # Only count cheats as successes if they bring us closer to the finish
