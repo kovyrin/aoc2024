@@ -170,7 +170,7 @@ class PathFinder
     cell = map.cell(position)
     return if cell == '#' || cell.nil?
 
-    path = (path.dup << position)
+    path << position
     update_score_for(position, steps)
 
     # Check if we are at the finish point.
