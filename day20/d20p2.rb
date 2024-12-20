@@ -196,10 +196,9 @@ start = nil
 finish = nil
 
 map.each_point do |point|
-  if map.cell(point) == 'S'
-    start = point
-  elsif map.cell(point) == 'E'
-    finish = point
+  case map.cell(point)
+    when 'S' then start = point
+    when 'E' then finish = point
   end
 end
 
