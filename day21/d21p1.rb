@@ -85,54 +85,48 @@ class Keypad
     @buttons.each do |x, start|
       @movements_map[x] = {}
       @buttons.each do |y, finish|
-        good_paths = []
-        walk_map(start:, finish:, good_paths:)
-        smallest = good_paths.min_by { |path| path.size }
-        @movements_map[x][y] = good_paths.select { |path| path.size == smallest.size }
+        paths = Set.new
+        walk_map(start:, finish:, paths:)
+        @movements_map[x][y] = paths
       end
     end
   end
 
   # Builds a path from the current button to the target button
-  def walk_map(start:, finish:, path: [], seen: [], good_paths:)
-    if start == finish
-      path << 'A'
-      good_paths << path
-      return path
-    end
-
-    return if seen.include?(start.to_s)
-    seen << start.to_s
-
+  def walk_map(start:, finish:, path: [], paths:)
     # Cannot move over empty cells or out of bounds
     cell = map.cell(start)
     return if cell.nil? || cell == '.'
 
-    # Move in all 4 directions
-    results = [
-      walk_map(start: start + Direction.step(UP), finish:, path: path + [UP], seen:, good_paths:),
-      walk_map(start: start + Direction.step(DOWN), finish:, path: path + [DOWN], seen:, good_paths:),
-      walk_map(start: start + Direction.step(LEFT), finish:, path: path + [LEFT], seen:, good_paths:),
-      walk_map(start: start + Direction.step(RIGHT), finish:, path: path + [RIGHT], seen:, good_paths:),
-    ].compact
+    if start == finish
+      sorted_path = path.sort
+      if sorted_path == path || sorted_path == path.reverse # do not flip directions more than once during the path
+        paths << path + ['A']
+        return path
+      end
+    end
 
-    results.min_by { |result| result.size }
+    results = []
+    results << walk_map(start: start + Direction.step(UP), finish:, path: path + [UP], paths:) if start.y > finish.y
+    results << walk_map(start: start + Direction.step(DOWN), finish:, path: path + [DOWN], paths:) if start.y < finish.y
+    results << walk_map(start: start + Direction.step(LEFT), finish:, path: path + [LEFT], paths:) if start.x > finish.x
+    results << walk_map(start: start + Direction.step(RIGHT), finish:, path: path + [RIGHT], paths:) if start.x < finish.x
+    results.compact.min_by { |result| result.size }
   end
 
   # Builds all possible ways we can type
-  def type_code(code, robot_pos = 'A', path = [], results = Set.new)
+  def type_code(code:, current_button: 'A', path: [], results: Set.new)
     if code.empty?
       results << path
-      return
+      return results
     end
 
     # All possible ways we can type the next button
     code = code.dup
-    button = code.shift
-    movements = @movements_map[robot_pos][button]
-
+    next_button = code.shift
+    movements = @movements_map[current_button][next_button]
     movements.each do |movement|
-      type_code(code, button, path + movement, results)
+      type_code(code:, current_button: next_button, path: path + movement, results:)
     end
 
     results
@@ -149,16 +143,15 @@ directional_keypad.build_movements_map
 input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
 codes = File.readlines(input_file).map(&:strip).reject(&:empty?).map(&:chars)
 
+total_complexity = 0
 codes.each do |code|
-  puts "Robot typing code: #{code.join}"
-
   min_human_sequence = nil
 
-  sequences = numeric_keypad.type_code(code)
+  sequences = numeric_keypad.type_code(code:)
   sequences.each do |sequence|
-    sequences2 = directional_keypad.type_code(sequence)
+    sequences2 = directional_keypad.type_code(code: sequence)
     sequences2.each do |sequence2|
-      sequences3 = directional_keypad.type_code(sequence2)
+      sequences3 = directional_keypad.type_code(code: sequence2)
       sequences3.each do |sequence3|
         if min_human_sequence.nil? || sequence3.size < min_human_sequence.size
           min_human_sequence = sequence3
@@ -167,5 +160,10 @@ codes.each do |code|
     end
   end
 
-  puts "Minimum human sequence: #{min_human_sequence.join} (length: #{min_human_sequence.size})"
+  puts "Minimum human sequence for #{code.join}: #{min_human_sequence.join.size}"
+  complexity = min_human_sequence.size * code.filter { |c| c.match?(/[0-9]/) }.join.to_i
+  puts "Complexity: #{complexity}"
+  total_complexity += complexity
 end
+
+puts "Total complexity: #{total_complexity}"
