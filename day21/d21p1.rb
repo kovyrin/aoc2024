@@ -85,14 +85,21 @@ class Keypad
     @buttons.each do |x, start|
       @movements_map[x] = {}
       @buttons.each do |y, finish|
-        @movements_map[x][y] = walk_map(start:, finish:)
+        good_paths = []
+        walk_map(start:, finish:, good_paths:)
+        smallest = good_paths.min_by { |path| path.size }
+        @movements_map[x][y] = good_paths.select { |path| path.size == smallest.size }
       end
     end
   end
 
   # Builds a path from the current button to the target button
-  def walk_map(start:, finish:, path: [], seen: [])
-    return path + ['A'] if start == finish
+  def walk_map(start:, finish:, path: [], seen: [], good_paths:)
+    if start == finish
+      path << 'A'
+      good_paths << path
+      return path
+    end
 
     return if seen.include?(start.to_s)
     seen << start.to_s
@@ -103,27 +110,32 @@ class Keypad
 
     # Move in all 4 directions
     results = [
-      walk_map(start: start + Direction.step(UP), finish:, path: path + [UP], seen:),
-      walk_map(start: start + Direction.step(DOWN), finish:, path: path + [DOWN], seen:),
-      walk_map(start: start + Direction.step(LEFT), finish:, path: path + [LEFT], seen:),
-      walk_map(start: start + Direction.step(RIGHT), finish:, path: path + [RIGHT], seen:),
+      walk_map(start: start + Direction.step(UP), finish:, path: path + [UP], seen:, good_paths:),
+      walk_map(start: start + Direction.step(DOWN), finish:, path: path + [DOWN], seen:, good_paths:),
+      walk_map(start: start + Direction.step(LEFT), finish:, path: path + [LEFT], seen:, good_paths:),
+      walk_map(start: start + Direction.step(RIGHT), finish:, path: path + [RIGHT], seen:, good_paths:),
     ].compact
 
     results.min_by { |result| result.size }
   end
 
-  def type_sequence(sequence)
-    pos = 'A'
-    sequence = sequence.dup
-
-    keys = []
-
-    while button = sequence.shift
-      keys += @movements_map[pos][button]
-      pos = button
+  # Builds all possible ways we can type
+  def type_code(code, robot_pos = 'A', path = [], results = Set.new)
+    if code.empty?
+      results << path
+      return
     end
 
-    keys
+    # All possible ways we can type the next button
+    code = code.dup
+    button = code.shift
+    movements = @movements_map[robot_pos][button]
+
+    movements.each do |movement|
+      type_code(code, button, path + movement, results)
+    end
+
+    results
   end
 end
 
@@ -138,12 +150,22 @@ input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
 codes = File.readlines(input_file).map(&:strip).reject(&:empty?).map(&:chars)
 
 codes.each do |code|
-  sequence = numeric_keypad.type_sequence(code)
-  puts "#{code.join}: #{sequence.join} (length: #{sequence.size})"
+  puts "Robot typing code: #{code.join}"
 
-  sequence2 = directional_keypad.type_sequence(sequence)
-  puts "  Keypad 2: #{sequence2.join} (length: #{sequence2.size})"
+  min_human_sequence = nil
 
-  sequence3 = directional_keypad.type_sequence(sequence2)
-  puts "  Keypad 3: #{sequence3.join} (length: #{sequence3.size})"
+  sequences = numeric_keypad.type_code(code)
+  sequences.each do |sequence|
+    sequences2 = directional_keypad.type_code(sequence)
+    sequences2.each do |sequence2|
+      sequences3 = directional_keypad.type_code(sequence2)
+      sequences3.each do |sequence3|
+        if min_human_sequence.nil? || sequence3.size < min_human_sequence.size
+          min_human_sequence = sequence3
+        end
+      end
+    end
+  end
+
+  puts "Minimum human sequence: #{min_human_sequence.join} (length: #{min_human_sequence.size})"
 end
