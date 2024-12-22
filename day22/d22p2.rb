@@ -52,8 +52,7 @@ seeds.each do |seed|
   # generate all price n-grams of length 4 and record each n-gram with the price at the end of the n-gram
   ngram_length = 4
   seen_ngrams = Set.new
-  (0..price_diff_pairs.size - ngram_length).each do |start_index|
-    window = price_diff_pairs[start_index, ngram_length]
+  price_diff_pairs.each_cons(ngram_length) do |window|
     price = window.last[:price]
     ngram = window.map { |p| p[:diff] }
 
