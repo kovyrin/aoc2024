@@ -6,27 +6,15 @@ class RandomGenerator
   end
 
   def next
-    a = @seed * 64
-    mix(a)
-    prune!
-
-    b = @seed / 32
-    mix(b)
-    prune!
-
-    c = @seed * 2048
-    mix(c)
-    prune!
+    mix_and_prune(@seed * 64)
+    mix_and_prune(@seed / 32)
+    mix_and_prune(@seed * 2048)
 
     @seed
   end
 
-  def mix(a)
-    @seed = @seed ^ a
-  end
-
-  def prune!
-    @seed = @seed % 16_777_216
+  def mix_and_prune(a)
+    @seed = (@seed ^ a) % 16_777_216
   end
 end
 
