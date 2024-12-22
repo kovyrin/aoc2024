@@ -63,6 +63,5 @@ seeds.each do |seed|
   end
 end
 
-best_price = shared_ngrams.values.max
-best_ngram = shared_ngrams.key(best_price)
-puts "Best ngram: #{best_ngram.join(',')} -> #{best_price}"
+ngram, price = shared_ngrams.max_by { |ngram, price| price }
+puts "Best ngram: #{ngram.join(',')} -> #{price}"
