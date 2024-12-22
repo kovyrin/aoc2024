@@ -30,8 +30,7 @@ seeds.each do |seed|
   price_diff_pairs = []
 
   2000.times do
-    number = random_generator.next
-    price = number % 10
+    price = random_generator.next % 10
     diff = price - previous_price
     previous_price = price
     price_diff_pairs << {price: price, diff: diff}
