@@ -43,9 +43,7 @@ seeds.each do |seed|
   price_diff_pairs.each_cons(ngram_length) do |window|
     price = window.last[:price]
     ngram = window.map { |p| p[:diff] }
-
-    next if seen_ngrams.include?(ngram)
-    seen_ngrams.add(ngram)
+    next unless seen_ngrams.add?(ngram)
 
     shared_ngrams[ngram] += price
   end
