@@ -33,7 +33,7 @@ seeds.each do |seed|
     price = random_generator.next % 10
     diff = price - previous_price
     previous_price = price
-    price_diff_pairs << {price: price, diff: diff}
+    price_diff_pairs << {price: , diff: }
   end
 
   # generate all price n-grams of length 4 and record each n-gram with the price at the end of the n-gram
