@@ -1,28 +1,33 @@
 #! /usr/bin/env ruby
 
-def bron_kerbosch(r, p, x, network, maximal_clique = Set.new)
-  if p.empty? && x.empty?
-    # Only consider if larger than previous maximal clique
-    if maximal_clique.nil? || r.size > maximal_clique.size
-      maximal_clique.clear
-      maximal_clique.merge(r)
+class CliqueFinder
+  attr_reader :maximal_clique, :network
+
+  def initialize(network)
+    @network = network
+    @maximal_clique = Set.new
+  end
+
+  def bron_kerbosch(current: Set.new, candidates:, excluded: Set.new)
+    if candidates.empty? && excluded.empty?
+      @maximal_clique = current.to_a.sort if current.size > maximal_clique.size
+      return @maximal_clique
     end
-    return maximal_clique
+
+    pivot = candidates.first # Pick a pivot node (makes it a lot faster)
+    non_neighbors = candidates - network[pivot]
+
+    non_neighbors.each do |v|
+      current.add(v)
+      next_p = candidates & network[v]
+      next_x = excluded & network[v]
+      bron_kerbosch(current: current, candidates: next_p, excluded: next_x)
+      current.delete(v)
+      excluded.add(v)
+    end
+
+    maximal_clique
   end
-
-  pivot = p.first # Pick a random pivot
-  non_neighbors = p - network[pivot]
-
-  non_neighbors.each do |v|
-    r.add(v)
-    next_p = p & network[v]
-    next_x = x & network[v]
-    bron_kerbosch(r, next_p, next_x, network, maximal_clique)
-    r.delete(v)
-    x.add(v)
-  end
-
-  maximal_clique
 end
 
 network = Hash.new { |h, k| h[k] = Set.new }
@@ -35,14 +40,8 @@ lines.each do |line|
   network[to].add(from)
 end
 
-puts "network.keys.size: #{network.keys.size}"
-
-r = Set.new
-p = Set.new(network.keys)
-x = Set.new
-
-result = bron_kerbosch(r, p, x, network)
-result = result.to_a.sort
-puts "result: #{result.join(',')} (size: #{result.size})"
+clique_finder = CliqueFinder.new(network)
+result = clique_finder.bron_kerbosch(candidates: Set.new(network.keys))
+puts "result: #{result.join(',')}"
 
 # am,au,be,cm,fo,ha,hh,im,nt,os,qz,rr,so - good
