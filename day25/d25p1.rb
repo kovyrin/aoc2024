@@ -17,10 +17,7 @@ end
 input_file = ENV['REAL'] ? "input.txt" : "input-demo.txt"
 lines = File.readlines(input_file).map(&:strip).reject(&:empty?)
 
-patterns = {
-  lock: [],
-  key: []
-}
+patterns = { lock: [], key: [] }
 
 while lines.any?
   # read key pattern (5x7 characters)
