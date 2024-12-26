@@ -8,8 +8,6 @@ def count_matching_locks(key_pin_lengths, lock_index, checking_pin = 0)
   lock_pin_limit = 5 - key_pin # max length of the lock pin that would fit the key pin
 
   lock_pin_options = (0..lock_pin_limit).to_a & lock_index.keys
-  return 0 if lock_pin_options.empty?
-
   lock_pin_options.sum do |lock_pin|
     count_matching_locks(key_pin_lengths, lock_index[lock_pin], checking_pin + 1)
   end
